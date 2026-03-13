@@ -1,6 +1,8 @@
 package http
 
 import (
+	"io"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gingray/quitedb/internal/http/handler"
 	"github.com/gingray/quitedb/internal/store"
@@ -19,8 +21,8 @@ func (r *Router) SetupRoutes(router *gin.Engine) {
 	router.GET("/health", probeHandler.HealthHandler)
 	router.GET("/ready", probeHandler.ReadyHandler)
 	router.GET("/", r.Root)
-	router.GET("/get", r.GetKey)
-	router.POST("/put", r.PutKey)
+	router.GET("/get/:key", r.GetKey)
+	router.POST("/put/:key", r.PutKey)
 
 }
 
@@ -29,27 +31,19 @@ func (r *Router) Root(c *gin.Context) {
 }
 
 func (r *Router) GetKey(c *gin.Context) {
-	key, present := c.GetQuery("key")
-	if !present {
-		c.AbortWithStatus(400)
-		return
-	}
+	key := c.Param("key")
 	value := r.db.Get(key)
 	c.String(200, value.(string))
 }
 
 func (r *Router) PutKey(c *gin.Context) {
-	key, present := c.GetQuery("key")
-	if !present {
-		c.AbortWithStatus(400)
-		return
-	}
-	value, present := c.GetQuery("value")
-	if !present {
+	key := c.Param("key")
+	data, err := io.ReadAll(c.Request.Body)
+	if err != nil {
 		c.AbortWithStatus(400)
 		return
 	}
 
-	r.db.Put(key, value)
+	r.db.Put(key, string(data))
 	c.Status(200)
 }

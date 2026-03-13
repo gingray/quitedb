@@ -29,12 +29,12 @@ export default function () {
     if (randomValue === "PUT") {
         const key = randomKey();
         const value = randomInt(10000);
-        const url = `http://localhost:3000/put?key=${key}&value=${value}`
-        res = http.post(url, {})
+        const url = `http://localhost:3000/put/${key}`
+        res = http.post(url, `${value}`)
 
     } else {
         const key = randomKey();
-        const url = `http://localhost:3000/get?key=${key}`
+        const url = `http://localhost:3000/get/${key}`
         res = http.get(url);
     }
     check(res, {"status is 200": (r) => {

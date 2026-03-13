@@ -53,14 +53,15 @@ func ParseLine(line string) (ActionLine, error) {
 
 func (suite *QuiteDbTestSuite) makeRequest(action ActionLine) (string, error) {
 	if action.Action == "PUT" {
-		putEndpoint := fmt.Sprintf("%s/put?key=%s&value=%d", suite.serverUrl, action.Key, action.Value)
-		resp, err := http.Post(putEndpoint, "application/json", bytes.NewBuffer([]byte{}))
+		putEndpoint := fmt.Sprintf("%s/put/%s", suite.serverUrl, action.Key)
+		buffer := bytes.NewBuffer([]byte(fmt.Sprintf("%d", action.Value)))
+		resp, err := http.Post(putEndpoint, "text/plain", buffer)
 		defer resp.Body.Close()
 		suite.Assertions.NoError(err)
 		data, err := io.ReadAll(resp.Body)
 		return string(data), err
 	} else {
-		getEndpoint := fmt.Sprintf("%s/get?key=%s", suite.serverUrl, action.Key)
+		getEndpoint := fmt.Sprintf("%s/get/%s", suite.serverUrl, action.Key)
 		resp, err := http.Get(getEndpoint)
 		defer resp.Body.Close()
 		suite.Assertions.NoError(err)
