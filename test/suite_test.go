@@ -14,6 +14,7 @@ import (
 	"github.com/gingray/quitedb/pkg/config"
 	"github.com/gingray/quitedb/pkg/httpserver"
 	"github.com/gingray/quitedb/pkg/lifecycle"
+	"github.com/gingray/quitedb/pkg/store"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -26,6 +27,7 @@ type QuiteDbTestSuite struct {
 func (suite *QuiteDbTestSuite) SetupSuite() {
 	cfg, err := config.NewConfig()
 	cfg.Port = 9191
+	cfg.StoragePath = Storage
 	suite.Assertions.NotNil(cfg)
 	suite.Assertions.NoError(err)
 
@@ -34,21 +36,26 @@ func (suite *QuiteDbTestSuite) SetupSuite() {
 	suite.Assertions.NotNil(appClient)
 	suite.serverUrl = fmt.Sprintf("http://localhost:%d", cfg.Port)
 	server := httpserver.NewServer(&cfg.HTTPServiceConfig, appClient)
-	router := http.NewRouter(appClient.Db)
+	db := store.NewDb(&cfg.StorageConfig)
+	router := http.NewRouter(db)
 	router.SetupRoutes(appClient.HttpRouter)
 
 	supervisor := lifecycle.NewSupervisor(appClient.Logger)
 	rootNode := supervisor.CreateRootNode()
+	dbNode := supervisor.CreateNode(db)
 	appNode := supervisor.CreateNode(appClient)
 	serverNode := supervisor.CreateNode(server)
 
-	rootNode.AddNode(appNode)
+	rootNode.AddNode(dbNode)
+	dbNode.AddNode(appNode)
 	appNode.AddNode(serverNode)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	suite.cancel = cancel
 	timer := time.NewTimer(1 * time.Second)
 	go func() {
 		err = rootNode.Run(ctx)
+		suite.Assertions.NoError(err)
 	}()
 	<-timer.C
 }
