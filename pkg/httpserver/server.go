@@ -9,7 +9,6 @@ import (
 	"github.com/gingray/quitedb/pkg/app"
 	"github.com/gingray/quitedb/pkg/config"
 	"github.com/gingray/quitedb/pkg/lifecycle"
-	"github.com/twmb/franz-go/pkg/kgo"
 )
 
 type Server struct {
@@ -17,7 +16,6 @@ type Server struct {
 	router *gin.Engine
 	logger config.Logger
 	addr   string
-	kafka  *kgo.Client
 	ch     chan struct{}
 }
 

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gingray/quitedb/internal/store"
 	"github.com/gingray/quitedb/pkg/config"
 	"github.com/gingray/quitedb/pkg/lifecycle"
 )
@@ -13,7 +12,6 @@ type App struct {
 	lifecycle.BaseComponent
 	HttpRouter *gin.Engine
 	Logger     config.Logger
-	Db         *store.Db
 }
 
 func (a *App) Name() string {
@@ -31,8 +29,6 @@ func NewApp(cfg *config.Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	app.Db = store.NewDb()
-
 	return app, nil
 }
 

@@ -6,10 +6,15 @@ import (
 
 type Config struct {
 	HTTPServiceConfig
+	StorageConfig
 }
 
 type HTTPServiceConfig struct {
 	Port int `env:"HTTP_PORT" envDefault:"3000"`
+}
+
+type StorageConfig struct {
+	StoragePath string `env:"STORAGE_PATH" envDefault:"./storage"`
 }
 
 func NewConfig() (*Config, error) {
