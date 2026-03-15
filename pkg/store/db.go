@@ -58,13 +58,12 @@ func (d *Db) Get(key string) interface{} {
 func (d *Db) Put(key string, value interface{}) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	d.currentOperationCount++
-	if d.currentOperationCount >= flushCount {
+	if len(d.store) >= flushCount {
 		err := d.flush(d.store, d.Manifest)
 		if err != nil {
 			panic(err)
 		}
-		d.currentOperationCount = 0
+		d.store = make(map[string]interface{})
 	}
 	d.store[key] = value
 }

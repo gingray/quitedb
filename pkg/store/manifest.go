@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 )
 
@@ -16,12 +17,13 @@ type Manifest struct {
 	ManifestPath  string
 	ManifestFile  *os.File
 	NextSSTableId int64
+	SSTFiles      []string
 }
 
-const mPath = "manifest"
+const manifestPath = "manifest"
 
 func NewManifest(storagePath string) *Manifest {
-	manifestPath := filepath.Join(storagePath, mPath)
+	manifestPath := filepath.Join(storagePath, manifestPath)
 	return &Manifest{ManifestPath: manifestPath}
 }
 func (m *Manifest) InitManifest() error {
@@ -84,5 +86,40 @@ func (m *Manifest) findLastSSTFile(file *os.File) error {
 		return err
 	}
 	m.NextSSTableId = n + 1
+	return nil
+}
+
+func (m *Manifest) readFileListFromManifest(file *os.File) error {
+	buf := make([]byte, 4096)
+	var partial []byte
+	var sstFileList []string
+	var err error
+	var n int
+	for {
+		n, err = file.Read(buf)
+		if n == 0 {
+			break
+		}
+
+		data := append(partial, buf[:n]...)
+
+		lines := bytes.Split(data, []byte("\n"))
+
+		partial = lines[len(lines)-1]
+
+		for _, line := range lines[:len(lines)-1] {
+			sstFileList = append(sstFileList, string(line))
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+	sort.Strings(sstFileList)
+	m.SSTFiles = sstFileList
+	m.NextSSTableId, err = strconv.ParseInt(m.SSTFiles[len(m.SSTFiles)-1], 10, 64)
+	if err != nil {
+		return err
+	}
 	return nil
 }
