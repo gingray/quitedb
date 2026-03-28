@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gingray/quitedb/internal/http/handler"
-	"github.com/gingray/quitedb/internal/store"
+	"github.com/gingray/quitedb/pkg/store"
 )
 
 type Router struct {

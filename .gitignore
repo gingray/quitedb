@@ -27,3 +27,4 @@ treemd.sh
 # Editor/IDE
  .idea/
  .vscode/
+ test/fixtures/storage

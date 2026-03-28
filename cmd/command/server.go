@@ -11,6 +11,7 @@ import (
 	"github.com/gingray/quitedb/pkg/config"
 	"github.com/gingray/quitedb/pkg/httpserver"
 	"github.com/gingray/quitedb/pkg/lifecycle"
+	"github.com/gingray/quitedb/pkg/store"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
@@ -36,6 +37,7 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg, cfgErr := config.NewConfig()
 		app, err := app.NewApp(cfg)
+		db := store.NewDb(&cfg.StorageConfig)
 		if err != nil {
 			err = errors.Join(cfgErr, err)
 		}
@@ -45,15 +47,17 @@ to quickly create a Cobra application.`,
 		}
 
 		server := httpserver.NewServer(&cfg.HTTPServiceConfig, app)
-		router := http.NewRouter(app.Db)
+		router := http.NewRouter(db)
 		router.SetupRoutes(app.HttpRouter)
 
 		supervisor := lifecycle.NewSupervisor(app.Logger)
 		rootNode := supervisor.CreateRootNode()
+		dbNode := supervisor.CreateNode(db)
 		appNode := supervisor.CreateNode(app)
 		serverNode := supervisor.CreateNode(server)
 
-		rootNode.AddNode(appNode)
+		rootNode.AddNode(dbNode)
+		dbNode.AddNode(appNode)
 		appNode.AddNode(serverNode)
 		err = rootNode.Run(cmd.Context())
 		if err != nil {
